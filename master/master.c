@@ -13,25 +13,29 @@ int main(void)
     // Setup code
     clock_prescale_set(clock_div_1);
 
-    // T/C setup code, see also data sheet section 14.10 page 121 ff
-    TCCR1A = 0;                          //WGM{0,1,3} = 0, WGM2 = 1
-    TCCR1C = 0;
-                                         // 16MHz / 1024 = 15625 Ticks per second
-    OCR1A = 1024;                        // 15625/2
-    TIMSK1 = 1 << OCIE1A;                // enable OCIE1A
-    TIFR1 = 0xff;                        //reset stuff
+    // SPI setup, section 17, page 179ff
+    PRR0 &= ~(1 << PRSPI);                 // enable SPI by writing 0 to the Power Reduction SPI bit (p179)
+    DDRB = (1<<DDB0)|(1<<DDB1)|(1<<DDB2);            // set SCK (PB1) and MOSI(PB2) to output, all others to input
 
-                                         // WGM{0,1,3} = 0, WGM2 = 1
-    TCCR1B = (1 << WGM12) | (5 << CS10); // clock select CLK/1024=0b101, starts le clock
+    SPCR = (1 << SPE)|(1<<MSTR)|(1<<SPR1)|(1<<SPR0);                     // enable SPI
+    //SPCR |= (1 << SPIE);                   // enable SPI interrupt
+    //SPCR |= (1 << MSTR);                   // set to slave SPI mode
+    //SPCR |= (1 << SPR1) | (1 << SPR0);     // set clock speed to f_osc/128
 
     // enable interrupts
-    sei();
+    //sei();
 
     while (1) {
-    }
-}
+       SPCR |= (1<<MSTR);
+       SPDR = 0x5;
+       while (!(SPSR & (1<<SPIF)));
+       _delay_ms(500);
 
-ISR(TIMER1_COMPA_vect)
-{
+       SPCR |= (1<<MSTR);
+       SPDR = 0x2;
+       while (!(SPSR & (1<<SPIF)));
+       _delay_ms(500);
+
+    }
 }
 
