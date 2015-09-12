@@ -30,16 +30,17 @@ int main(void)
     DDRB = (1 << DDB3);                    // set MISO (PB3) to output, all others to input
 
     SPCR = (1 << SPE);                     // enable SPI
-    //SPCR |= (1 << SPIE);                   // enable SPI interrupt
+    SPCR |= (1 << SPIE);                   // enable SPI interrupt
 
     // enable interrupts
-    //sei();
+    sei();
 
     while (1) {
-        while (!(SPSR & (1<<SPIF)));
-        led_control((uint16_t)SPDR);
-        _delay_ms(400);
     }
+}
+
+ISR(SPI_STC_vect){
+    led_control((uint16_t)SPDR);
 }
 
 void led_control(uint16_t leds){
